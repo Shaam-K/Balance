@@ -2,8 +2,8 @@ const IndiaFlag = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
-    width={32}
-    height={32}
+    width={40}
+    height={40}
     viewBox="0 0 640 480"
   >
     <path fill="#f93" d="M0 0h640v160H0z" />
