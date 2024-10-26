@@ -2,8 +2,12 @@ import PhoneInput from 'react-phone-number-input/input';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import IndiaFlag from '@/components/IndiaFlag';
-import { auth } from '../config/firebase.ts';
+import { auth, db } from '../config/firebase.ts';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { UserAuth } from '@/context/AuthContext.tsx';
+import { doc, getDoc, setDoc } from "firebase/firestore"; 
+
+
 
 import {
   InputOTP,
@@ -23,8 +27,9 @@ const Login = () => {
   const [startOtp, setStartOtp] = useState(false);
   const [otpValue, setOtpValue] = useState("");
 
+  const { setIsAdmin } = UserAuth();
 
-  const verifyOTp = () => {
+  const initCaptcha = () => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
         'size': 'invisible',
@@ -37,7 +42,7 @@ const Login = () => {
   }
 
   const startPhoneNumber = () => {
-    verifyOTp();
+    initCaptcha();
     const appVerifier = window.recaptchaVerifier;
     signInWithPhoneNumber(auth, phone, appVerifier).then((confirmationResult) => {
       window.confirmationResult = confirmationResult;
@@ -46,11 +51,27 @@ const Login = () => {
       console.log(err);
     })
   }
+  
 
-  const doME = () => {
-    console.log("bismillah");
+  const verifyOtp = () => {
+    window.confirmationResult.confirm(otpValue).then(async (res:any) => {
+      const fetchUser = await getDoc(doc(db,"users", res.user.uid));
+
+      if (!fetchUser.data()) {
+        const userData = {
+          phone: res.user.phoneNumber
+        };
+
+        await setDoc(doc(db,"users",res.user.uid), userData);
+      } else {
+        if (fetchUser.data()?.type == "admin") {
+          setIsAdmin(true);
+        }
+      }
+    }).catch((err: Error) => {
+        console.log(err.message);
+    })
   }
-
 
 
   return (
@@ -80,7 +101,7 @@ const Login = () => {
             </InputOTP>
 
             <div className="mt-10">
-              <Button className="text-xl" variant="outline" onClick={doME}>Verify</Button>
+              <Button className="text-xl" variant="outline" onClick={verifyOtp}>Verify</Button>
             </div>
           </div>
 
