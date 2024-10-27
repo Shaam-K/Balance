@@ -7,6 +7,7 @@ import Login from './Pages/Login'
 import CreateArea from './Pages/CreateArea'
 import Area from './Pages/Area'
 import Dash from './Pages/Dash'
+import ViewIssue from './Pages/ViewIssue'
 import CreateIssue from './Pages/CreateIssue'
 import UpdateIssue from './Pages/UpdateIssue'
 import DeleteIssue from './Pages/DeleteIssue'
@@ -24,10 +25,11 @@ function App() {
             <Route path="/create-area/:id" element={<CreateArea />} />
             <Route path="/dash/" element={<Dash />} />
             <Route path="/dash/create/" element={<CreateIssue />} />
+            <Route path="/view/:areaId/:postId" element={<ViewIssue />} />
             <Route path="/edit/:areaId/:postId" element={<UpdateIssue />} />
-            <Route path="/edit/:areaId/:postId" element={<DeleteIssue />} />
+            <Route path="/delete/:areaId/:postId" element={<DeleteIssue />} />
             <Route path="/dash/create/" element={<CreateIssue />} />
-            <Route path="/area/:areaid" element={< Area />} />
+            <Route path="/show-areas/" element={< Area />} />
           </Routes>
         </AuthContextProvider>
       </Router>

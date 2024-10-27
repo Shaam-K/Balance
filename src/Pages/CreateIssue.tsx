@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import { db, storage } from '@/config/firebase';
 import { ref, uploadBytes } from 'firebase/storage';
 import { UserAuth } from '@/context/AuthContext';
@@ -21,21 +21,25 @@ const CreateIssue = () => {
     const navigate = useNavigate();
 
     const handleIssue = async () => {
-        const data = {
-            title: title,
-            description: description,
-            address: address
-        }
-
         const postId = crypto.randomUUID();
         const imageRef = ref(storage, `${selectedArea}/${postId}`);
 
         if (image) {
-            const imageUpload = await uploadBytes(imageRef, image[0], { contentType: 'image/jpeg' });
+            await uploadBytes(imageRef, image[0], { contentType: 'image/jpeg' });
 
         }
 
-        await setDoc(doc(collection(db,"areas", selectedArea, "posts"), postId), data);
+        const area = await getDoc(doc(db,"areas", selectedArea));
+
+        const issueData = {
+            title: title,
+            description: description,
+            address: address,
+            areaName: area.data()?.areaName
+        }
+
+
+        await setDoc(doc(collection(db,"areas", selectedArea, "posts"), postId), issueData);
 
         if (user) {
             await setDoc(doc(collection(db,"users", user.uid, "posts"), postId), {
