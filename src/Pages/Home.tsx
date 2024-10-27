@@ -8,7 +8,7 @@ const Home = () => {
       </div>
         <Button onClick={() => {
           window.location.href = "/enter"
-        }} className="text-3xl h-16 tracking-tighter dark:border-zinc-300 border-zinc-700" variant="outline">Get Started</Button>
+        }} className="text-3xl h-16 tracking-tighter" variant="outline">Get Started {'>>'}</Button>
     </section>
   )
 }

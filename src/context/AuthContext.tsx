@@ -17,8 +17,10 @@ export interface UserContextInterface {
 
 const defaultState = {
     user: {},
+    isAdmin: false,
     setIsAdmin: (admin: Admin) => {},
-    setUser: (user: User) => {}
+    setUser: (user: User) => {},
+    logout: () => {}
 } as UserContextInterface
 
 
@@ -32,7 +34,6 @@ export const AuthContextProvider = ( {children}: UserProvideProps) => {
     const [user, setUser] = useState<User>({});
     const [isAdmin, setIsAdmin] = useState<Admin>(false);
 
-
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             console.log(currentUser);
@@ -42,6 +43,21 @@ export const AuthContextProvider = ( {children}: UserProvideProps) => {
             unsubscribe();
         }
     },[])
+
+    useEffect(() => {
+        const mtAdmin = async () => {
+            if (user) {
+                const getUser = await getDoc(doc(db,"users", user.uid));
+                
+                if (getUser.data()) {
+                    if (getUser.data()?.type == "admin") {
+                        setIsAdmin(true);
+                    }
+                }
+            }
+        }
+        mtAdmin();
+    },[user])
 
     const logout = () => {
         return signOut(auth);

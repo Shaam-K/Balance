@@ -1,12 +1,32 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { ModeToggle } from './mode-toggle'
 import { Link } from 'react-router-dom'
 import { UserAuth } from '@/context/AuthContext'
 import { Button } from './ui/button'
 import { useNavigate } from 'react-router-dom'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/config/firebase'
 const Navbar = () => {
-    const { user, isAdmin, logout } = UserAuth();
+    const { user, logout } = UserAuth();
     const navigate = useNavigate();
+
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        const checkAdmin = async () => {
+            if (user) {
+                const getUser = await getDoc(doc(db,"users", user.uid));
+    
+                if (getUser.data()) {
+                    if (getUser.data()?.type == "admin") {
+                        setIsAdmin(true);
+                    }
+                }
+            }
+        }
+
+        checkAdmin();
+    },[user])
 
     const handleLogout = async () => {
         try {
@@ -24,12 +44,13 @@ const Navbar = () => {
                     {isAdmin ?
                         <span>
                             <Link to="/" className="mx-2">My Area</Link>
+                            
                             <Button className="mx-4" onClick={handleLogout}>Sign Out</Button>
                             <ModeToggle />
                         </span> :
 
                         <span>
-                            <Link to="/" className="mx-2">My Issues</Link>
+                            <Link to="/dash" className="mx-2">My Issues</Link>
                             <Link to="/" className='mx-2'>Check Areas</Link>
                             <Button className="mx-4" onClick={handleLogout}>Sign Out</Button>
                             <ModeToggle />

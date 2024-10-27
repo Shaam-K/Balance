@@ -6,14 +6,14 @@ import { auth, db } from '../config/firebase.ts';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { UserAuth } from '@/context/AuthContext.tsx';
 import { doc, getDoc, setDoc } from "firebase/firestore"; 
-
-
+import { setPersistence, browserLocalPersistence } from 'firebase/auth';
 
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
+import { useNavigate } from 'react-router-dom';
 
 declare global {
   interface Window {
@@ -25,47 +25,60 @@ declare global {
 const Login = () => {
   const [phone, setPhone] = useState("");
   const [startOtp, setStartOtp] = useState(false);
-  const [otpValue, setOtpValue] = useState("");
+  const [otpValue, setOtpValue] = useState("");;
+
+  const navigate = useNavigate();
 
   const { setIsAdmin } = UserAuth();
 
   const initCaptcha = () => {
     if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
         'callback': (response: any) => {
           // reCAPTCHA solved, allow signInWithPhoneNumber.
           startPhoneNumber();
         }
-      });
+      }
+    );
     }
   }
 
-  const startPhoneNumber = () => {
+
+  const startPhoneNumber = async () => {
     initCaptcha();
     const appVerifier = window.recaptchaVerifier;
-    signInWithPhoneNumber(auth, phone, appVerifier).then((confirmationResult) => {
+    try {
+      const confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
       window.confirmationResult = confirmationResult;
       setStartOtp(true);
-    }).catch((err) => {
-      console.log(err);
-    })
-  }
+    } catch (error) {
+      console.log("Error during phone number sign-in:", error);
+    }
+  };
+  
   
 
   const verifyOtp = () => {
     window.confirmationResult.confirm(otpValue).then(async (res:any) => {
+      await setPersistence(auth, browserLocalPersistence);
       const fetchUser = await getDoc(doc(db,"users", res.user.uid));
 
       if (!fetchUser.data()) {
         const userData = {
-          phone: res.user.phoneNumber
+          phone: res.user.phoneNumber,
         };
 
         await setDoc(doc(db,"users",res.user.uid), userData);
       } else {
         if (fetchUser.data()?.type == "admin") {
           setIsAdmin(true);
+
+          if (!fetchUser.data()?.areaId) {
+            navigate(`/create-area/${res.user.uid}`);
+          }
+        } else {
+          navigate('/dash/')
         }
       }
     }).catch((err: Error) => {
@@ -77,7 +90,7 @@ const Login = () => {
   return (
     <>
       <section className="md:w-6/12 mt-[20vh] md:mx-auto mx-5 ">
-        <div id="sign-in-button" className='display-hidden'></div>
+        <div id="recaptcha-container"></div>
         {startOtp ?
 
           <div>
